@@ -1,3 +1,4 @@
+CREATE DATABASE IF NOT EXISTS dishcovery;
 USE dishcovery;
 
 -- 1. Language table
