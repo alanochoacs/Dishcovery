@@ -1,3 +1,4 @@
+-- Active: 1764526925547@@127.0.0.1@3306@mysql
 -- MySQL dump 10.13  Distrib 8.0.44, for Win64 (x86_64)
 --
 -- Host: localhost    Database: dishcovery
@@ -231,3 +232,68 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-11-30  2:10:20
+
+/* Start process to import dishes from csv */
+-- Step 0: Set UTF-8 connection
+SET NAMES utf8mb4;
+
+-- Step 1: Drop temp table if exists
+DROP TABLE IF EXISTS tmp_dishes;
+
+-- Step 2: Create temp table
+CREATE TABLE tmp_dishes (
+    country_name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+    name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+    description TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+    is_national_dish TINYINT(1)
+);
+
+-- Step 3: Load CSV robustly
+LOAD DATA LOCAL INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/foodculture_dishes_rev2.csv'
+INTO TABLE tmp_dishes
+CHARACTER SET latin1  -- original CSV encoding, latin1/Windows-1252
+FIELDS TERMINATED BY ';'
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'  -- Line endings
+IGNORE 1 ROWS
+(@country_name, @iso3, @dish_name, @description, @national_dish,
+ @beef, @veal, @fowl, @pork, @bacon, @ham, @sheep_lamb_mutton, @goat, @venison, @horse,
+ @rabbit, @sausage, @edible_offal, @fish, @seal, @caviar, @clam, @prawn_shrimp, @conch, @mussel, @crab,
+ @lobster, @octopus, @seaweed, @snail, @frog, @iguana, @bat, @rice, @tofu, @pasta_wheat, @rice_noodle, @couscous,
+ @bulgur_wheat, @barley, @gravy, @salt, @pepper, @saltpeter, @sugar, @honey, @corn_syrup, @starch_corn,
+ @stock_vegetable, @stock_beef_chicken, @stock_fish, @steak_sauce, @fish_sauce, @fish_paste, @shrimp_paste,
+ @sofrito_sauce, @hot_sauce, @moambe_nyembwe_sauce, @chimichurri_sauce, @worcestershire_sauce, @tabasco_sauce,
+ @sambal_oelek, @salsa_lizano, @adobo_sauce, @allspice, @sazon_goya, @five_spice_powder, @pomtajer, @netetou,
+ @baharat, @mustaka_gumarabic, @garam_masala, @cassareep, @berbere_spice, @wasabi, @tumeric, @basil, @rosemary,
+ @oregano, @marjoram, @parsley, @chives, @coriander_cilantro, @guasca, @fern, @screwpine_pandan_leave, @molokhia_leave,
+ @ademe_leave, @cinnamon, @cumin_ajwain, @cardamom, @sesame, @egusi_seed, @nigella_seed, @fenugreek, @thyme,
+ @mint_leave, @annatto_achiote, @saffron, @bezar, @nutmeg_mace, @caraway, @anise, @bay_leave, @vine_grape_leave,
+ @sage, @dill, @bamboo_shoot, @clover_sprout, @brussels_sprout, @gnetum_africanum, @clove, @chili_hotpeppers,
+ @curry, @harissa, @asafoetida, @masala, @ghee, @oil, @fat_lard_shortening_suet, @vinegar, @soy_sauce, @soybean_paste,
+ @oyster_sauce, @ketchup, @mayonnaise, @mustard, @jam, @lemon_lime, @tomato, @carrot, @corn_maize, @millet, @potato,
+ @sweet_potato, @cauliflower, @broccoli, @pea, @chickpea, @bean, @asparagus, @bean_sprout, @lentil, @greens, @zucchini,
+ @eggplant, @sweet_paprika, @fennel, @cassava_yuca_manioc, @teff, @celery, @parsnip, @leek, @lettuce, @cucumber_pickles_gherkin,
+ @scallion, @spinach, @bitter_melon, @bitterleaf, @cabbage_sauerkraut, @rutabaga, @okra, @starch_sago, @yams, @taro_dasheen_pulaka,
+ @breadfruit, @beetroot, @turnip, @radish, @mushroom, @bell_pepper, @onion_shallot, @garlic, @lemongrass, @vanilla,
+ @olives, @caper, @ginger, @lily_bud, @galangal, @pineapple, @banana_plantain, @banana_leaves, @mango, @apple, @orange,
+ @apricot, @strawberry, @prune_plum, @pomegranate, @coconut, @avocado, @papaya, @ackee, @raisin, @date_tamarind,
+ @pumpkin_squash, @pistachio, @peanut, @cashew, @macadamia_nut, @water_chestnut, @pine_nut, @almond, @egg, @milk,
+ @butter_margarine, @yogurt, @cream, @cheese, @curd, @chocolate, @flour_wheat_corn, @dough_pastry, @yeast, @baking_soda_powder,
+ @bread, @cookies, @cereal, @corn_tortilla, @wine, @beer, @hard_liquor)
+SET
+    country_name = CONVERT(@country_name USING utf8mb4),
+    name = CONVERT(@dish_name USING utf8mb4),
+    description = CONVERT(@description USING utf8mb4),
+    is_national_dish = CASE
+                          WHEN @national_dish IN ('TRUE','true','1') THEN 1
+                          ELSE 0
+                       END;
+
+-- Step 4: Insert into main table using country_id
+INSERT INTO dish (country_id, name, description, is_national_dish)
+SELECT c.id, t.name, t.description, t.is_national_dish
+FROM tmp_dishes t
+JOIN country c ON c.country_name = t.country_name;
+
+-- Step 5: Drop temp table
+DROP TABLE tmp_dishes;
