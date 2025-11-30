@@ -1,0 +1,18 @@
+{
+  "name": "dishcovery",
+  "version": "1.0.0",
+  "description": "Dishcovery: search for dishes from around the world",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.15.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
