@@ -248,6 +248,7 @@ CREATE TABLE tmp_dishes (
     is_national_dish TINYINT(1)
 );
 
+
 -- Step 3: Load CSV robustly
 LOAD DATA LOCAL INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/foodculture_dishes_rev2.csv'
 INTO TABLE tmp_dishes
@@ -294,6 +295,7 @@ INSERT INTO dish (country_id, name, description, is_national_dish)
 SELECT c.id, t.name, t.description, t.is_national_dish
 FROM tmp_dishes t
 JOIN country c ON c.country_name = t.country_name;
+
 
 -- Step 5: Drop temp table
 DROP TABLE tmp_dishes;

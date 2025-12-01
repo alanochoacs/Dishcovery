@@ -3,7 +3,18 @@ const path = require("path");
 const { pool } = require("./db"); // Imports your CommonJS pool
 
 const CSV_PATH = path.join(__dirname, "../database/foodculture_dishes_rev2.csv");
-
+const dishImages = {
+  "Biryani": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Hyderabadi_Chicken_Biryani.jpg",
+  "Tacos": "https://upload.wikimedia.org/wikipedia/commons/5/51/Plated_tacos.jpg",
+  "Sushi": "https://upload.wikimedia.org/wikipedia/commons/6/60/Sushi_platter.jpg",
+  "Pizza": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Supreme_pizza.jpg",
+  "Pad Thai": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Pad_Thai_kung.jpg",
+  "Poutine": "https://upload.wikimedia.org/wikipedia/commons/0/04/Poutine.jpg",
+  "Paella": "https://upload.wikimedia.org/wikipedia/commons/3/39/Paella.jpg",
+  "Kimchi": "https://upload.wikimedia.org/wikipedia/commons/9/9b/Kimchi.jpg",
+  "Shawarma": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Shawarma_plate.jpg",
+  "Falafel": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Falafel.jpg"
+};
 async function seed() {
   let connection;
   try {
@@ -52,13 +63,17 @@ async function seed() {
       }
       const countryId = countryRows[0].id;
 
-      // B. Insert Dish
+      // B. Insert Dish WITH IMAGE
+      const img = dishImages[dishName] || null;
+
       const [dishResult] = await connection.execute(
-        `INSERT INTO dish (country_id, name, description, is_national_dish) 
-         VALUES (?, ?, ?, ?)`,
-        [countryId, dishName, description, isNational]
+        `INSERT INTO dish (country_id, name, description, is_national_dish, image_url)
+        VALUES (?, ?, ?, ?, ?)`,
+        [countryId, dishName, description, isNational, img]
       );
+
       const dishId = dishResult.insertId;
+
 
       // C. Process Ingredients (Columns 5+)
       for (let j = 0; j < ingredientHeaders.length; j++) {
@@ -101,6 +116,7 @@ async function seed() {
       // Log progress every 10 items
       if (i % 10 === 0) process.stdout.write(".");
     }
+    
 
     await connection.commit();
     console.log("\nDatabase seeded successfully!");
@@ -112,5 +128,6 @@ async function seed() {
     process.exit();
   }
 }
+
 
 seed();

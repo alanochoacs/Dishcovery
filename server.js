@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 const { pool } = require("./src/db");
 
 // Serve static files
-app.use(express.static(__dirname));
+app.use(express.static(__dirname+ "/frontend"));
 
 app.use((req, res, next) => {
   const start = process.hrtime.bigint();
@@ -62,11 +62,12 @@ app.get("/api/search", async (req, res) => {
     connection = await pool.getConnection();
 
     let sql = `
-      SELECT dish.id, dish.name, dish.description, country.country_name
-      FROM dish
-      JOIN country ON country.id = dish.country_id
-      WHERE (dish.name LIKE ? OR dish.description LIKE ?)
-    `;
+  SELECT dish.id, dish.name, dish.description, dish.image_url, country.country_name
+  FROM dish
+  JOIN country ON country.id = dish.country_id
+  WHERE (dish.name LIKE ? OR dish.description LIKE ?)
+`;
+
 
     const params = [`%${q}%`, `%${q}%`];
 
@@ -87,6 +88,31 @@ app.get("/api/search", async (req, res) => {
     if (connection) connection.release();
   }
 });
+/**
+ * Endpoint: Get dishes to display on homepage (with images)
+ */
+app.get("/api/dishes", async (req, res) => {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const [rows] = await connection.execute(`
+      SELECT dish.name, dish.description, dish.image_url, country.country_name
+      FROM dish
+      JOIN country ON country.id = dish.country_id
+      WHERE dish.image_url IS NOT NULL
+      AND dish.image_url <> ''
+      ORDER BY RAND()
+      LIMIT 6
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error("Database error", error);
+    res.status(500).json({ error: "Failed to fetch dishes" });
+  } finally {
+    if (connection) connection.release();
+  }
+});
+
 
 // Print server start message to console
 app.listen(PORT, () => {
