@@ -1,38 +1,94 @@
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Dishcovery</title>
-	<style>
-		body{font-family:Segoe UI,Roboto,Arial;margin:24px;background:#f7f7f8;color:#111}
-		.search-container{max-width:800px;margin:0 auto}
-		.search-row{display:flex;gap:8px}
-		input[type="search"]{flex:1;padding:10px 12px;font-size:16px;border:1px solid #ccc;border-radius:6px}
-		button{padding:10px 14px;border-radius:6px;border:1px solid #2b6ea3;background:#3182ce;color:white;cursor:pointer}
-		ul.results{list-style:none;padding:0;margin-top:16px}
-		ul.results li{background:white;padding:12px;border-radius:8px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-		.meta{color:#555;font-size:13px;margin-top:6px}
-		.hint{color:#666;font-size:13px;margin-top:12px}
-	</style>
-</head>
-<body>
-	<div class="search-container">
-		<h1>Dishcovery — Search Dishes</h1>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dishcovery</title>
+    <style>
+      body {
+        font-family: Segoe UI, Roboto, Arial;
+        margin: 24px;
+        background: #f7f7f8;
+        color: #111;
+      }
+      .search-container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
 
-        <!-- Search Bar -->
-		<div class="search-row">
-			<input id="query" type="search" placeholder="Search dishes, countries, ingredients..." aria-label="Search" />
-		</div>
+      .search-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
 
-		<div class="hint">Try: "pizza", "Mexico", or "rice"</div>
+      input[type="search"] {
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
 
-        <!-- Search Results (is populated dynamically in app.js) -->
-		<ul id="results" class="results" aria-live="polite"></ul>
-	</div>
+      select {
+        padding: 10px 12px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+        max-width: 200px;
+      }
+
+      ul.results {
+        list-style: none;
+        padding: 0;
+        margin-top: 16px;
+      }
+      ul.results li {
+        background: white;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      .meta {
+        color: #555;
+        font-size: 13px;
+        margin-top: 6px;
+      }
+      .hint {
+        color: #666;
+        font-size: 13px;
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="search-container">
+      <h1>Dishcovery — Search Dishes</h1>
+
+      <!-- Search Bar -->
+      <div class="search-row">
+        <input
+          id="query"
+          type="search"
+          placeholder="Search dishes..."
+          aria-label="Search"
+        />
+
+		<select id="countrySelect" aria-label="Filter by Country">
+			<option value="">All Countries</option>
+		</select>
+      </div>
+
+      <div class="hint">Try: "pizza", "Mexico", or "rice"</div>
+
+      <!-- Search Results (is populated dynamically in app.js) -->
+      <ul id="results" class="results" aria-live="polite"></ul>
+    </div>
 
     <!-- Run app.js -->
-	<script src="/app.js"></script>
-</body>
+    <script src="/app.js"></script>
+  </body>
 </html>

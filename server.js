@@ -10,23 +10,75 @@ const { pool } = require("./src/db");
 // Serve static files
 app.use(express.static(__dirname));
 
+app.use((req, res, next) => {
+  const start = process.hrtime.bigint();
+
+  // Log when the response finishes so we can include status and duration
+  res.on("finish", () => {
+    const durationMs = Number(process.hrtime.bigint() - start) / 1_000_000; // ns -> ms
+    const info = {
+      method: req.method,
+      url: req.originalUrl || req.url,
+      status: res.statusCode,
+      durationMs: Number(durationMs.toFixed(2)),
+    };
+    console.log(
+      `[REQ] ${info.method} ${info.url} -> ${info.status} (${info.durationMs} ms)`
+    );
+  });
+
+  next();
+});
+
+/**
+ * Endpoint: Get all countries
+ * Returns a list of ID and Names to populate dropdowns or lists
+ */
+app.get("/api/countries", async (req, res) => {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const [rows] = await connection.execute(
+      `SELECT id, country_name FROM country ORDER BY country_name ASC`
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Database error", error);
+    res.status(500).json({ error: "Failed to fetch countries" });
+  } finally {
+    if (connection) connection.release();
+  }
+});
+
 // Search API querying the database
 app.get("/api/search", async (req, res) => {
   const q = (req.query.q || "").trim(); // Get and trim query parameter from frontend
+  const countryId = req.query.countryId; // Get optional countryId
+
   if (!q) return res.json([]); // Return empty array if no query
 
   let connection;
   try {
-    connection = await pool.getConnection(); // Setup connection to frontend
-    // Perform search query
-    const [rows] = await connection.execute(
-      `SELECT dish.id, dish.name, dish.description, country.country_name
-             FROM dish
-             JOIN country ON country.id = dish.country_id
-             WHERE dish.name LIKE ? OR dish.description LIKE ?
-             LIMIT 50`,
-      [`%${q}%`, `%${q}%`]
-    );
+    connection = await pool.getConnection();
+
+    let sql = `
+      SELECT dish.id, dish.name, dish.description, country.country_name
+      FROM dish
+      JOIN country ON country.id = dish.country_id
+      WHERE (dish.name LIKE ? OR dish.description LIKE ?)
+    `;
+
+    const params = [`%${q}%`, `%${q}%`];
+
+    if (countryId) {
+      sql += ` AND dish.country_id = ?`;
+      params.push(countryId);
+    }
+
+    sql += ` LIMIT 50`;
+
+    const [rows] = await connection.execute(sql, params);
+
     res.json(rows); // Send results as JSON to frontend
   } catch (error) {
     console.error("Database error", error); // Log database errors
