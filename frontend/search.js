@@ -32,6 +32,8 @@ async function performSearch() {
       const card = document.createElement("div");
       card.className = "dish-card";
 
+      const is_national_dish = dish.is_national_dish ? "✔️" : "";
+
       card.innerHTML = `
         <div class="dish-image">
           ${dish.image_url 
@@ -40,7 +42,7 @@ async function performSearch() {
         </div>
         <div class="dish-info">
           <div class="dish-name">${dish.name}</div>
-          <div class="dish-origin">${dish.country_name}</div>
+          <div class="dish-origin">${is_national_dish} ${dish.country_name}</div>
           <div class="dish-description">${dish.description || "No details available"}</div>
         </div>
       `;

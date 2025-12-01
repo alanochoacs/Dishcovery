@@ -67,7 +67,7 @@ app.get("/api/search", async (req, res) => {
 
     if (type === "name") {
       sql = `
-        SELECT *
+        SELECT dish.name, dish.description, dish.image_url, country.country_name, dish.is_national_dish
         FROM dish
         JOIN country ON country.id = dish.country_id
         WHERE (dish.name LIKE ? OR dish.description LIKE ?)
@@ -76,7 +76,7 @@ app.get("/api/search", async (req, res) => {
       params = [`%${q}%`, `%${q}%`];
     } else if (type === "country") {
       sql = `
-        SELECT *
+        SELECT dish.name, dish.description, dish.image_url, country.country_name, dish.is_national_dish
         FROM dish
         JOIN country ON country.id = dish.country_id
         WHERE country.country_name LIKE ?
@@ -85,7 +85,7 @@ app.get("/api/search", async (req, res) => {
       params = [`%${q}%`];
     } else if (type === "continent") {
       sql = `
-        SELECT *
+        SELECT dish.name, dish.description, dish.image_url, country.country_name, dish.is_national_dish
         FROM dish
         JOIN country ON country.id = dish.country_id
         JOIN region ON region.id = country.region_id
@@ -95,7 +95,7 @@ app.get("/api/search", async (req, res) => {
       params = [`%${q}%`];
     } else if (type === "language") {
       sql = `
-        SELECT *
+        SELECT dish.name, dish.description, dish.image_url, country.country_name, dish.is_national_dish
         FROM dish
         JOIN country ON country.id = dish.country_id
         JOIN language ON language.id = country.main_language_id
@@ -105,7 +105,7 @@ app.get("/api/search", async (req, res) => {
       params = [`%${q}%`];
     } else if (type === "category") {
       sql = `
-        SELECT *
+        SELECT dish.name, dish.description, dish.image_url, country.country_name, dish.is_national_dish
         FROM dish
         JOIN dish_category ON dish_category.dish_id = dish.id
         JOIN category ON category.id = dish_category.category_id
