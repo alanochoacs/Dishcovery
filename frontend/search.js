@@ -32,7 +32,7 @@ async function performSearch() {
       const card = document.createElement("div");
       card.className = "dish-card";
 
-      const is_national_dish = dish.is_national_dish ? "✔️" : "";
+      const is_national_dish = dish.is_national_dish ? '<span title="National Dish">⭐</span>' : '';
 
       card.innerHTML = `
         <div class="dish-image">
