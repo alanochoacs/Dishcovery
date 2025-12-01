@@ -1,9 +1,9 @@
 const fs = require("fs");
 const path = require("path");
-const { pool } = require("./src/db");
+const { pool } = require("../../src/db");
 
 async function runMigrations() {
-  const folder = path.join(__dirname, "migrations");
+  const folder = __dirname;
   const files = fs.readdirSync(folder).sort();
 
   for (const file of files) {

@@ -6,6 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const { pool } = require("./src/db");
+const e = require("express");
 
 // Serve static files
 app.use(express.static(__dirname+ "/frontend"));
@@ -53,7 +54,7 @@ app.get("/api/countries", async (req, res) => {
 // Search API querying the database
 app.get("/api/search", async (req, res) => {
   const q = (req.query.q || "").trim(); // Get and trim query parameter from frontend
-  const countryId = req.query.countryId; // Get optional countryId
+  const type = (req.query.type || "name").trim();
 
   if (!q) return res.json([]); // Return empty array if no query
 
@@ -61,22 +62,58 @@ app.get("/api/search", async (req, res) => {
   try {
     connection = await pool.getConnection();
 
-    let sql = `
-  SELECT dish.id, dish.name, dish.description, dish.image_url, country.country_name
-  FROM dish
-  JOIN country ON country.id = dish.country_id
-  WHERE (dish.name LIKE ? OR dish.description LIKE ?)
-`;
+    let sql = "";
+    let params = [];
 
-
-    const params = [`%${q}%`, `%${q}%`];
-
-    if (countryId) {
-      sql += ` AND dish.country_id = ?`;
-      params.push(countryId);
+    if (type === "name") {
+      sql = `
+        SELECT *
+        FROM dish
+        JOIN country ON country.id = dish.country_id
+        WHERE (dish.name LIKE ? OR dish.description LIKE ?)
+        LIMIT 50
+      `;
+      params = [`%${q}%`, `%${q}%`];
+    } else if (type === "country") {
+      sql = `
+        SELECT *
+        FROM dish
+        JOIN country ON country.id = dish.country_id
+        WHERE country.country_name LIKE ?
+        LIMIT 50
+      `;
+      params = [`%${q}%`];
+    } else if (type === "continent") {
+      sql = `
+        SELECT *
+        FROM dish
+        JOIN country ON country.id = dish.country_id
+        JOIN region ON region.id = country.region_id
+        WHERE region.name LIKE ?
+        LIMIT 50
+      `;
+      params = [`%${q}%`];
+    } else if (type === "language") {
+      sql = `
+        SELECT *
+        FROM dish
+        JOIN country ON country.id = dish.country_id
+        JOIN language ON language.id = country.main_language_id
+        WHERE language.name LIKE ?
+        LIMIT 50
+      `;
+      params = [`%${q}%`];
+    } else if (type === "category") {
+      sql = `
+        SELECT *
+        FROM dish
+        JOIN dish_category ON dish_category.dish_id = dish.id
+        JOIN category ON category.id = dish_category.category_id
+        WHERE category.name LIKE ?
+        LIMIT 50
+      `;
+      params = [`%${q}%`];
     }
-
-    sql += ` LIMIT 50`;
 
     const [rows] = await connection.execute(sql, params);
 
