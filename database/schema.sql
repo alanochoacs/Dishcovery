@@ -83,6 +83,7 @@ CREATE TABLE `dish` (
   `country_id` int DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
   `description` text,
+  `image_url` varchar(511) DEFAULT NULL,
   `is_national_dish` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `country_id` (`country_id`),
@@ -250,7 +251,7 @@ CREATE TABLE tmp_dishes (
 
 
 -- Step 3: Load CSV robustly
-LOAD DATA LOCAL INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/foodculture_dishes_rev2.csv'
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/foodculture_dishes_rev2.csv'
 INTO TABLE tmp_dishes
 CHARACTER SET latin1  -- original CSV encoding, latin1/Windows-1252
 FIELDS TERMINATED BY ';'
