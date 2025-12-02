@@ -103,17 +103,19 @@ app.get("/api/search", async (req, res) => {
         LIMIT 50
       `;
       params = [`%${q}%`];
-    } else if (type === "category") {
+   } else if (type === "category") {
       sql = `
-        SELECT *
+        SELECT dish.*, country.country_name, category.category_name
         FROM dish
         JOIN dish_category ON dish_category.dish_id = dish.id
         JOIN category ON category.id = dish_category.category_id
-        WHERE category.name LIKE ?
+        JOIN country ON country.id = dish.country_id
+        WHERE category.category_name LIKE ?
         LIMIT 50
       `;
       params = [`%${q}%`];
     }
+
 
     const [rows] = await connection.execute(sql, params);
 
@@ -132,16 +134,42 @@ app.get("/api/dishes", async (req, res) => {
   let connection;
   try {
     connection = await pool.getConnection();
+
     const [rows] = await connection.execute(`
-      SELECT dish.name, dish.description, dish.image_url, country.country_name
+      SELECT 
+        dish.id,
+        dish.name,
+        dish.description,
+        dish.image_url,
+        country.country_name,
+        category.category_name
       FROM dish
       JOIN country ON country.id = dish.country_id
+      LEFT JOIN dish_category ON dish_category.dish_id = dish.id
+      LEFT JOIN category ON category.id = dish_category.category_id
       WHERE dish.image_url IS NOT NULL
-      AND dish.image_url <> ''
+        AND dish.image_url <> ''
       ORDER BY RAND()
       LIMIT 6
     `);
-    res.json(rows);
+
+    // GROUP BY dish so categories come as array
+    const grouped = rows.reduce((acc, row) => {
+      if (!acc[row.id]) {
+        acc[row.id] = {
+          id: row.id,
+          name: row.name,
+          description: row.description,
+          image_url: row.image_url,
+          country: row.country_name,
+          categories: [],
+        };
+      }
+      if (row.category_name) acc[row.id].categories.push(row.category_name);
+      return acc;
+    }, {});
+
+    res.json(Object.values(grouped)); // return array of dishes
   } catch (error) {
     console.error("Database error", error);
     res.status(500).json({ error: "Failed to fetch dishes" });
@@ -149,6 +177,57 @@ app.get("/api/dishes", async (req, res) => {
     if (connection) connection.release();
   }
 });
+
+//randome dish generator
+app.get("/api/random-dish", async (req, res) => {
+  let connection;
+  try {
+    const count = Number(req.query.count) || 1;
+
+    connection = await pool.getConnection();
+
+    const [rows] = await connection.query(`
+      SELECT 
+        dish.id,
+        dish.name,
+        dish.description,
+        dish.image_url,
+        country.country_name,
+        category.category_name
+      FROM dish
+      JOIN country ON country.id = dish.country_id
+      LEFT JOIN dish_category ON dish_category.dish_id = dish.id
+      LEFT JOIN category ON category.id = dish_category.category_id
+      WHERE dish.image_url IS NOT NULL
+        AND dish.image_url <> ''
+      ORDER BY RAND()
+      LIMIT ${count}
+    `);
+
+    const grouped = rows.reduce((acc, row) => {
+      if (!acc[row.id]) {
+        acc[row.id] = {
+          id: row.id,
+          name: row.name,
+          description: row.description,
+          image: row.image_url,
+          country: row.country_name,
+          categories: []
+        };
+      }
+      if (row.category_name) acc[row.id].categories.push(row.category_name);
+      return acc;
+    }, {});
+
+    res.json(Object.values(grouped));
+  } catch (error) {
+    console.error("Random dish error:", error);
+    res.status(500).json({ error: "Failed to fetch random dishes" });
+  } finally {
+    if (connection) connection.release();
+  }
+});
+
 
 
 // Print server start message to console

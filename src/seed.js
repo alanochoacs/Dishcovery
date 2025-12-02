@@ -3,18 +3,20 @@ const path = require("path");
 const { pool } = require("./db"); // Imports your CommonJS pool
 
 const CSV_PATH = path.join(__dirname, "../database/foodculture_dishes_rev2.csv");
-const dishImages = {
-  "Biryani": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Hyderabadi_Chicken_Biryani.jpg",
-  "Tacos": "https://upload.wikimedia.org/wikipedia/commons/5/51/Plated_tacos.jpg",
-  "Sushi": "https://upload.wikimedia.org/wikipedia/commons/6/60/Sushi_platter.jpg",
-  "Pizza": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Supreme_pizza.jpg",
-  "Pad Thai": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Pad_Thai_kung.jpg",
-  "Poutine": "https://upload.wikimedia.org/wikipedia/commons/0/04/Poutine.jpg",
-  "Paella": "https://upload.wikimedia.org/wikipedia/commons/3/39/Paella.jpg",
-  "Kimchi": "https://upload.wikimedia.org/wikipedia/commons/9/9b/Kimchi.jpg",
-  "Shawarma": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Shawarma_plate.jpg",
-  "Falafel": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Falafel.jpg"
-};
+// const dishImages = {
+//   "Biryani": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Hyderabadi_Chicken_Biryani.jpg",
+//   "Tacos": "https://upload.wikimedia.org/wikipedia/commons/5/51/Plated_tacos.jpg",
+//   "Sushi": "https://upload.wikimedia.org/wikipedia/commons/6/60/Sushi_platter.jpg",
+//   "Pizza": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Supreme_pizza.jpg",
+//   "Pad Thai": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Pad_Thai_kung.jpg",
+//   "Poutine": "https://upload.wikimedia.org/wikipedia/commons/0/04/Poutine.jpg",
+//   "Paella": "https://upload.wikimedia.org/wikipedia/commons/3/39/Paella.jpg",
+//   "Kimchi": "https://upload.wikimedia.org/wikipedia/commons/9/9b/Kimchi.jpg",
+//   "Shawarma": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Shawarma_plate.jpg",
+//   "Falafel": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Falafel.jpg"
+// };
+const dishImages = require("./dishImages.generated.json");
+
 async function seed() {
   let connection;
   try {
@@ -116,7 +118,52 @@ async function seed() {
       // Log progress every 10 items
       if (i % 10 === 0) process.stdout.write(".");
     }
-    
+    // =======================================
+    // CATEGORY DEFINITIONS & DETECTION
+    // =======================================
+    const CATEGORY_MAP = [
+      { id: 5, keywords: ["soup", "broth", "bisque", "stew", "goulash", "leves"] },
+      { id: 6, keywords: ["bread", "bun", "roti", "flatbread", "pastry", "pie", "pita", "tortilla", "dumpling", "bao", "baozi"] },
+      { id: 7, keywords: ["tea", "coffee", "drink", "juice", "smoothie", "beverage", "brew", "beer", "wine"] },
+      { id: 3, keywords: ["dessert", "sweet", "cake", "pudding", "custard", "ice cream", "tart", "chocolate", "macadamia"] },
+      { id: 2, keywords: ["appetizer", "starter", "snack", "salad", "mezze", "hummus", "bruschetta", "samosa", "dumpling"] },
+      { id: 4, keywords: ["side", "side dish", "beans", "pickles", "fried potatoes", "greens", "breadfruit"] },
+      {
+        id: 1,
+        keywords: [
+          "meat dish", "meat", "chicken", "beef", "lamb", "goat", "fish",
+          "fried", "grilled", "stewed", "curry", "rice dish", "rice", "porridge",
+          "pasta", "casserole", "tagine", "kabsa", "biryani", "plov", "dal"
+        ]
+      }
+    ];
+
+    function detectCategory(description) {
+      if (!description) return 1; // default → Main Course
+      const desc = description.toLowerCase();
+
+      for (const c of CATEGORY_MAP) {
+        if (c.keywords.some(keyword => desc.includes(keyword))) {
+          return c.id;
+        }
+      }
+      return 1; // fallback
+    }
+
+    console.log("Classifying dishes into categories...");
+
+const [dishRows] = await connection.query("SELECT id, description FROM dish");
+
+for (const dish of dishRows) {
+  const categoryId = detectCategory(dish.description);
+  await connection.execute(
+    "INSERT IGNORE INTO dish_category (dish_id, category_id) VALUES (?, ?)",
+    [dish.id, categoryId]
+  );
+}
+
+console.log("✔ Dish categories assigned");
+
 
     await connection.commit();
     console.log("\nDatabase seeded successfully!");

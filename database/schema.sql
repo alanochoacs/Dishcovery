@@ -297,6 +297,9 @@ SELECT c.id, t.name, t.description, t.is_national_dish
 FROM tmp_dishes t
 JOIN country c ON c.country_name = t.country_name;
 
+INSERT INTO category (category_name)
+VALUES ('Main Course'), ('Appetizer'), ('Dessert'), ('Side Dish'), ('Soup'), ('Bread'), ('Beverage');
+
 
 -- Step 5: Drop temp table
 DROP TABLE tmp_dishes;
