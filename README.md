@@ -7,3 +7,6 @@ Dishcovery is an application that allows users to explore countries and their we
 - Run schema.sql in the database folder
 - Start the server: `npm start`
 - Open the site: `http://localhost:3000`
+
+## Demo Video
+A demo video can be found [here](https://drive.google.com/file/d/1U2_UYzjsUS4MztOMc1aUN7ez6WKKvAbT/view?usp=sharing).
